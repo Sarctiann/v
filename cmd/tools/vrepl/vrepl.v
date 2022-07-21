@@ -28,11 +28,16 @@ mut:
 	eval_func_lines []string // same line of the `VSTARTUP` file, but used to test fn type
 }
 
-const is_stdin_a_pipe = (os.is_atty(0) == 0)
-
-const vexe = os.getenv('VEXE')
-
-const vstartup = os.getenv('VSTARTUP')
+const (
+	is_stdin_a_pipe = (os.is_atty(0) == 0)
+	vexe            = os.getenv('VEXE')
+	vstartup        = os.getenv('VSTARTUP')
+	help            = ':help'
+	list            = ':list'
+	reset           = ':reset'
+	exit            = ':exit'
+	clear           = ':clear'
+)
 
 enum FnType {
 	@none
@@ -63,11 +68,11 @@ fn endline_if_missed(line string) string {
 fn repl_help() {
 	println(version.full_v_version(false))
 	println('
-	|help                   Displays this information.
-	|list                   Show the program so far.
-	|reset                  Clears the accumulated program, so you can start a fresh.
-	|Ctrl-C, Ctrl-D, exit   Exits the REPL.
-	|clear                  Clears the screen.
+	|$help                  Displays this information.
+	|$list                  Show the program so far.
+	|$reset                 Clears the accumulated program, so you can start a fresh.
+	|$exit, Ctrl-C, Ctrl-D  Exits the REPL.
+	|$clear                 Clears the screen.
 '.strip_margin())
 }
 
@@ -217,9 +222,9 @@ fn highlight_repl_command(command string) string {
 }
 
 fn print_welcome_screen() {
-	cmd_exit := highlight_repl_command('exit')
-	cmd_list := highlight_repl_command('list')
-	cmd_help := highlight_repl_command('help')
+	cmd_exit := highlight_repl_command(exit)
+	cmd_list := highlight_repl_command(list)
+	cmd_help := highlight_repl_command(help)
 	cmd_v_help := highlight_console_command('v help')
 	cmd_v_run := highlight_console_command('v run main.v')
 	file_main := highlight_console_command('main.v')
@@ -294,10 +299,10 @@ fn run_repl(workdir string, vrepl_prefix string) int {
 		if line == '' && oline.ends_with('\n') {
 			continue
 		}
-		if line.len <= -1 || line == '' || line == 'exit' {
+		if line.len <= -1 || line == '' || line == exit {
 			break
 		}
-		if exit_pos := line.index('exit') {
+		if exit_pos := line.index(exit) {
 			oparen := line[(exit_pos + 4)..].trim_space()
 			if oparen.starts_with('(') {
 				if closing := oparen.index(')') {
@@ -310,11 +315,11 @@ fn run_repl(workdir string, vrepl_prefix string) int {
 		if r.line == '\n' {
 			continue
 		}
-		if r.line == 'clear' {
+		if r.line == clear {
 			term.erase_clear()
 			continue
 		}
-		if r.line == 'help' {
+		if r.line == help {
 			repl_help()
 			continue
 		}
@@ -344,11 +349,11 @@ fn run_repl(workdir string, vrepl_prefix string) int {
 			eprintln('repl: $r')
 			continue
 		}
-		if r.line == 'reset' {
+		if r.line == reset {
 			r = new_repl()
 			continue
 		}
-		if r.line == 'list' {
+		if r.line == list {
 			source_code := r.current_source_code(true, true)
 			println('\n${source_code.replace('\n\n', '\n')}')
 			continue
